@@ -1,0 +1,104 @@
+name: terraform-ci
+
+# Runs on every pull request: format, validate, lint, security scan, then a plan.
+# The plan uses a read-only AWS role reached through GitHub OIDC (no stored keys).
+on:
+  pull_request:
+    paths:
+      - "bootstrap/**"
+      - "modules/**"
+      - "envs/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VERSION: "1.10.5"
+  AWS_REGION: eu-central-1
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+
+      - name: Validate modules and stacks
+        run: |
+          for dir in bootstrap envs/dev modules/vpc modules/ecs-service; do
+            echo "::group::validate $dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: TFLint
+        run: |
+          tflint --init
+          tflint --recursive
+
+      # Report-only for now. This demo knowingly has a public HTTP load balancer and
+      # wildcard IAM actions scoped by resource prefix; review the findings, record
+      # accepted ones in a .trivyignore with reasons, then change exit-code to "1".
+      - name: Trivy config scan (report only)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+
+  plan:
+    needs: checks
+    runs-on: ubuntu-latest
+    # Fork PRs cannot get an OIDC token, so skip the plan for them.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Init
+        working-directory: envs/dev
+        run: terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: Plan
+        id: plan
+        working-directory: envs/dev
+        run: terraform plan -input=false -no-color -lock-timeout=60s | tee plan.txt
+
+      - name: Comment plan on the pull request
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            let body = 'Terraform plan did not produce output.';
+            try { body = fs.readFileSync('envs/dev/plan.txt', 'utf8'); } catch (e) {}
+            if (body.length > 60000) body = body.slice(-60000);
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '### Terraform plan (envs/dev)\n```\n' + body + '\n```'
+            });

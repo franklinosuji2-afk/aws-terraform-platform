@@ -1,0 +1,20 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+plan.txt
+override.tf
+override.tf.json
+*_override.tf
+*.tfvars
+!example.tfvars
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Lambda build output
+build/

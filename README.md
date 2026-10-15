@@ -48,15 +48,11 @@ change infrastructure can only be reached from a manually approved GitHub enviro
 
 ## Status: read this first
 
-- The code was written and checked for formatting and syntax (`tofu fmt`) and for internal consistency
-  (every variable, module input, output and resource reference resolves).
-- One line to watch on the first `terraform validate`: `invoked_via_function_url` in `modules/lambda-service/main.tf`. AWS requires
-  two permission statements for a public function URL; if your provider version rejects that argument, upgrade the provider.
-- It has **not** been run through `terraform validate`, `plan` or `apply` against AWS yet, because the
-  authoring environment could not download the AWS provider. The CI workflow runs `validate` on every
-  pull request; run `terraform init && terraform validate` locally once before relying on it.
-- Nothing has been deployed. Do not describe this as "running in production"; describe it as a tested
-  reference setup only after you have run an apply and a destroy yourself.
+- Checked locally with Terraform 1.16.5 and AWS provider 6.x: `terraform fmt -check` is clean and
+  `terraform init -backend=false && terraform validate` succeeds in `bootstrap`, `envs/dev` and all three modules.
+- Not yet done: `terraform plan` / `apply` against a real AWS account, and a first CI run on GitHub.
+  Nothing has been deployed, so do not describe this as running anywhere until you have run an apply and a destroy yourself.
+- Provider is pinned to `>= 6.0, < 7.0` (the `data.aws_region` `region` attribute needs provider 6).
 
 ## Setup
 

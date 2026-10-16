@@ -54,12 +54,9 @@ jobs:
       # wildcard IAM actions scoped by resource prefix; review the findings, record
       # accepted ones in a .trivyignore with reasons, then change exit-code to "1".
       - name: Trivy config scan (report only)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: config
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: "0"
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src ghcr.io/aquasecurity/trivy:0.58.0 \
+            config --severity HIGH,CRITICAL --exit-code 0 --no-progress .
 
   plan:
     needs: checks

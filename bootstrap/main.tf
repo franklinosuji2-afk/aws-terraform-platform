@@ -26,7 +26,8 @@ data "aws_caller_identity" "current" {}
 locals {
   account_id  = data.aws_caller_identity.current.account_id
   bucket_name = coalesce(var.state_bucket_name, "${var.project}-tfstate-${local.account_id}-${var.region}")
-  repo_sub    = "repo:${var.github_org}/${var.github_repo}"
+  # Newer repositories use immutable IDs in the OIDC subject: repo:OWNER@OWNER_ID/REPO@REPO_ID
+  repo_sub = var.github_org_id != null ? "repo:${var.github_org}@${var.github_org_id}/${var.github_repo}@${var.github_repo_id}" : "repo:${var.github_org}/${var.github_repo}"
 }
 
 # ---------------------------------------------------------------------------

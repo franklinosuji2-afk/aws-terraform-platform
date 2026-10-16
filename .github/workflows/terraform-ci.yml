@@ -71,15 +71,6 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      # TEMPORARY: prints the OIDC identity claims (never the token) to debug the role trust. Remove after use.
-      - name: Debug OIDC claims
-        run: |
-          set -eu
-          T=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          P=$(printf '%s' "$T" | cut -d. -f2 | tr '_-' '/+')
-          while [ $(( ${#P} % 4 )) -ne 0 ]; do P="$P="; done
-          printf '%s' "$P" | base64 -d | jq '{sub, aud, repository, repository_owner, ref, event_name, job_workflow_ref}'
-
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}

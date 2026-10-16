@@ -56,7 +56,7 @@ jobs:
       - name: Trivy config scan (report only)
         run: |
           docker run --rm -v "$PWD:/src" -w /src ghcr.io/aquasecurity/trivy:0.58.0 \
-            config --severity HIGH,CRITICAL --exit-code 0 --no-progress .
+            config --severity HIGH,CRITICAL --exit-code 0 .
 
   plan:
     needs: checks

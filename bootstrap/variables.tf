@@ -20,6 +20,23 @@ variable "github_repo" {
   type        = string
 }
 
+variable "github_org_id" {
+  description = "Numeric GitHub owner ID. Newer repositories put it into the OIDC subject (repo:OWNER@ID/REPO@ID:...). Set together with github_repo_id; leave both null for the classic repo:OWNER/REPO format."
+  type        = string
+  default     = null
+}
+
+variable "github_repo_id" {
+  description = "Numeric GitHub repository ID, see github_org_id."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = (var.github_repo_id == null) == (var.github_org_id == null)
+    error_message = "Set github_org_id and github_repo_id together, or neither."
+  }
+}
+
 variable "environment_name" {
   description = "GitHub environment whose jobs may assume the apply role."
   type        = string

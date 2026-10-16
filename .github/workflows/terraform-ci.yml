@@ -2,6 +2,7 @@ name: terraform-ci
 
 # Runs on every pull request: format, validate, lint, security scan, then a plan.
 # The plan uses a read-only AWS role reached through GitHub OIDC (no stored keys).
+# It only triggers when Terraform code or the workflows change (see the paths filter below).
 on:
   pull_request:
     paths:

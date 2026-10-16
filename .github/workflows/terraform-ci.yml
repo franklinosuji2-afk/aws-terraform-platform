@@ -23,7 +23,7 @@ env:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -60,7 +60,7 @@ jobs:
 
   plan:
     needs: checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Fork PRs cannot get an OIDC token, so skip the plan for them.
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:

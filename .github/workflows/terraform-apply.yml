@@ -29,7 +29,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: dev
     if: github.ref == 'refs/heads/main'
     steps:

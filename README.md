@@ -50,9 +50,12 @@ change infrastructure can only be reached from a manually approved GitHub enviro
 
 - Checked locally with Terraform 1.16.5 and AWS provider 6.x: `terraform fmt -check` is clean and
   `terraform init -backend=false && terraform validate` succeeds in `bootstrap`, `envs/dev` and all three modules.
-- Bootstrap applied to a real AWS account (state bucket, GitHub OIDC provider, plan and apply roles). The dev stack
-  (Lambda demo) has not been applied yet, and the first CI run is still to come.
-  Do not describe the demo as running anywhere until the apply workflow has run and the output URL works.
+- Verified end to end on a real AWS account: the bootstrap stack was applied, the CI workflow runs fmt, validate,
+  TFLint, Trivy (report only) and a plan through OIDC, and the `terraform-apply` workflow (manual run, approved in the
+  `dev` environment) deployed the dev stack. The Lambda function URL served its page afterwards.
+- Not yet tested: the `destroy` path of the apply workflow, and the optional ALB + Fargate stack (`enable_app = true`).
+- GitHub now includes the owner and repository IDs in the OIDC subject for newer repositories, so the bootstrap takes
+  `github_org_id` and `github_repo_id` (see `bootstrap/example.tfvars`). Without them the trust policies would not match.
 - Provider is pinned to `>= 6.0, < 7.0` (the `data.aws_region` `region` attribute needs provider 6).
 
 ## Setup
